@@ -271,7 +271,7 @@ router.post('/:id/improve', [
 
 // @desc    Delete app
 // @route   DELETE /api/apps/:id
-// @access  Private
+// @access  Public
 router.delete('/:id', async (req, res) => {
   try {
     const app = await App.findById(req.params.id);
@@ -284,9 +284,6 @@ router.delete('/:id', async (req, res) => {
     }
 
     await App.findByIdAndDelete(req.params.id);
-
-    // Update user stats
-    await req.user.updateStats('app', -1);
 
     res.json({
       success: true,
@@ -312,7 +309,6 @@ router.get('/public', async (req, res) => {
     const skip = (page - 1) * limit;
 
     const apps = await App.find({ isPublic: true })
-      .populate('user', 'name avatar')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);
