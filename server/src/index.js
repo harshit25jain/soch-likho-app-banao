@@ -13,7 +13,7 @@ const errorHandler = require('./middleware/errorHandler');
 // Import routes
 const appRoutes = require('./routes/apps');
 const deploymentRoutes = require('./routes/deployment');
-const userRoutes = require('./routes/users');
+// const userRoutes = require('./routes/users');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -63,7 +63,7 @@ app.get('/health', (req, res) => {
 // API routes
 app.use('/api/apps', appRoutes);
 app.use('/api/deployment', deploymentRoutes);
-app.use('/api/users', userRoutes);
+// app.use('/api/users', userRoutes);
 
 // 404 handler
 app.use('*', (req, res) => {
