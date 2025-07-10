@@ -2,7 +2,6 @@ const express = require('express');
 const { body, validationResult } = require('express-validator');
 const App = require('../models/App');
 const User = require('../models/User');
-const { protect } = require('../middleware/auth');
 const groqService = require('../services/GroqService');
 const logger = require('../utils/logger');
 const mongoose = require('mongoose');
@@ -203,7 +202,7 @@ router.put('/:id', [
 // @desc    Improve app code
 // @route   POST /api/apps/:id/improve
 // @access  Private
-router.post('/:id/improve', protect, [
+router.post('/:id/improve', [
   body('improvementPrompt', 'Improvement prompt is required').notEmpty().trim()
 ], async (req, res) => {
   try {
@@ -222,14 +221,6 @@ router.post('/:id/improve', protect, [
       return res.status(404).json({
         success: false,
         error: 'App not found'
-      });
-    }
-
-    // Check if user owns the app
-    if (app.user.toString() !== req.user.id && req.user.role !== 'admin') {
-      return res.status(403).json({
-        success: false,
-        error: 'Not authorized to improve this app'
       });
     }
 
@@ -282,7 +273,7 @@ router.post('/:id/improve', protect, [
 // @desc    Delete app
 // @route   DELETE /api/apps/:id
 // @access  Private
-router.delete('/:id', protect, async (req, res) => {
+router.delete('/:id', async (req, res) => {
   try {
     const app = await App.findById(req.params.id);
 
@@ -290,14 +281,6 @@ router.delete('/:id', protect, async (req, res) => {
       return res.status(404).json({
         success: false,
         error: 'App not found'
-      });
-    }
-
-    // Check if user owns the app
-    if (app.user.toString() !== req.user.id && req.user.role !== 'admin') {
-      return res.status(403).json({
-        success: false,
-        error: 'Not authorized to delete this app'
       });
     }
 
@@ -360,7 +343,7 @@ router.get('/public', async (req, res) => {
 // @desc    Get app status
 // @route   GET /api/apps/:id/status
 // @access  Private
-router.get('/:id/status', protect, async (req, res) => {
+router.get('/:id/status', async (req, res) => {
   try {
     const app = await App.findById(req.params.id).select('status');
 
@@ -368,14 +351,6 @@ router.get('/:id/status', protect, async (req, res) => {
       return res.status(404).json({
         success: false,
         error: 'App not found'
-      });
-    }
-
-    // Check if user owns the app
-    if (app.user.toString() !== req.user.id && req.user.role !== 'admin') {
-      return res.status(403).json({
-        success: false,
-        error: 'Not authorized to access this app'
       });
     }
 

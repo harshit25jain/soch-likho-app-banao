@@ -2,7 +2,6 @@ const express = require('express');
 const { body, validationResult } = require('express-validator');
 const App = require('../models/App');
 const User = require('../models/User');
-const { protect } = require('../middleware/auth');
 const deploymentService = require('../services/deploymentService');
 const logger = require('../utils/logger');
 
@@ -11,7 +10,7 @@ const router = express.Router();
 // @desc    Deploy app
 // @route   POST /api/deployment/deploy
 // @access  Private
-router.post('/deploy', protect, [
+router.post('/deploy', [
   body('appId', 'App ID is required').notEmpty(),
   body('framework', 'Framework must be one of: react, vue, vanilla, nextjs').isIn(['react', 'vue', 'vanilla', 'nextjs'])
 ], async (req, res) => {
@@ -106,7 +105,7 @@ router.post('/deploy', protect, [
 // @desc    Get deployment status
 // @route   GET /api/deployment/:appId/status
 // @access  Private
-router.get('/:appId/status', protect, async (req, res) => {
+router.get('/:appId/status', async (req, res) => {
   try {
     const app = await App.findById(req.params.appId);
 
@@ -176,7 +175,7 @@ router.get('/:appId/status', protect, async (req, res) => {
 // @desc    Redeploy app
 // @route   POST /api/deployment/:appId/redeploy
 // @access  Private
-router.post('/:appId/redeploy', protect, async (req, res) => {
+router.post('/:appId/redeploy', async (req, res) => {
   try {
     const app = await App.findById(req.params.appId);
 
@@ -256,7 +255,7 @@ router.post('/:appId/redeploy', protect, async (req, res) => {
 // @desc    Get deployment history
 // @route   GET /api/deployment/:appId/history
 // @access  Private
-router.get('/:appId/history', protect, async (req, res) => {
+router.get('/:appId/history', async (req, res) => {
   try {
     const app = await App.findById(req.params.appId);
 
