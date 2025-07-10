@@ -1,7 +1,6 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
 const App = require('../models/App');
-const User = require('../models/User');
 const deploymentService = require('../services/deploymentService');
 const logger = require('../utils/logger');
 
@@ -9,7 +8,7 @@ const router = express.Router();
 
 // @desc    Deploy app
 // @route   POST /api/deployment/deploy
-// @access  Private
+// @access  Public
 router.post('/deploy', [
   body('appId', 'App ID is required').notEmpty(),
   body('framework', 'Framework must be one of: react, vue, vanilla, nextjs').isIn(['react', 'vue', 'vanilla', 'nextjs'])
@@ -36,14 +35,6 @@ router.post('/deploy', [
       });
     }
 
-    // Check if user owns the app
-    if (app.user.toString() !== req.user.id && req.user.role !== 'admin') {
-      return res.status(403).json({
-        success: false,
-        error: 'Not authorized to deploy this app'
-      });
-    }
-
     // Check if app is ready for deployment
     if (app.status !== 'ready') {
       return res.status(400).json({
@@ -66,10 +57,6 @@ router.post('/deploy', [
           app.deploymentId = deploymentResult.deploymentId;
           await app.incrementDeployments();
           await app.save();
-
-          // Update user stats
-          await req.user.updateStats('deployment');
-          await req.user.updateStats('deployed');
 
           logger.info(`Deployment completed for app ${appId}: ${deploymentResult.deployUrl}`);
         } catch (error) {
@@ -104,7 +91,7 @@ router.post('/deploy', [
 
 // @desc    Get deployment status
 // @route   GET /api/deployment/:appId/status
-// @access  Private
+// @access  Public
 router.get('/:appId/status', async (req, res) => {
   try {
     const app = await App.findById(req.params.appId);
@@ -113,14 +100,6 @@ router.get('/:appId/status', async (req, res) => {
       return res.status(404).json({
         success: false,
         error: 'App not found'
-      });
-    }
-
-    // Check if user owns the app
-    if (app.user.toString() !== req.user.id && req.user.role !== 'admin') {
-      return res.status(403).json({
-        success: false,
-        error: 'Not authorized to access this app'
       });
     }
 
@@ -174,7 +153,7 @@ router.get('/:appId/status', async (req, res) => {
 
 // @desc    Redeploy app
 // @route   POST /api/deployment/:appId/redeploy
-// @access  Private
+// @access  Public
 router.post('/:appId/redeploy', async (req, res) => {
   try {
     const app = await App.findById(req.params.appId);
@@ -186,19 +165,11 @@ router.post('/:appId/redeploy', async (req, res) => {
       });
     }
 
-    // Check if user owns the app
-    if (app.user.toString() !== req.user.id && req.user.role !== 'admin') {
-      return res.status(403).json({
-        success: false,
-        error: 'Not authorized to redeploy this app'
-      });
-    }
-
     // Check if app is ready for deployment
     if (app.status !== 'ready' && app.status !== 'deployed') {
       return res.status(400).json({
         success: false,
-        error: 'App is not ready for deployment. Status: ' + app.status
+        error: 'App is not ready for redeployment. Status: ' + app.status
       });
     }
 
@@ -206,8 +177,8 @@ router.post('/:appId/redeploy', async (req, res) => {
     app.status = 'deploying';
     await app.save();
 
-    // Deploy asynchronously
-    deploymentService.deployApp(app._id.toString(), app.files, app.framework)
+    // Redeploy asynchronously
+    deploymentService.deployApp(app._id, app.files, app.framework)
       .then(async (deploymentResult) => {
         try {
           // Update app with deployment info
@@ -216,10 +187,6 @@ router.post('/:appId/redeploy', async (req, res) => {
           app.deploymentId = deploymentResult.deploymentId;
           await app.incrementDeployments();
           await app.save();
-
-          // Update user stats
-          await req.user.updateStats('deployment');
-          await req.user.updateStats('deployed');
 
           logger.info(`Redeployment completed for app ${app._id}: ${deploymentResult.deployUrl}`);
         } catch (error) {
