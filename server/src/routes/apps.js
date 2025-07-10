@@ -1,7 +1,6 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
 const App = require('../models/App');
-const User = require('../models/User');
 const groqService = require('../services/GroqService');
 const logger = require('../utils/logger');
 const mongoose = require('mongoose');
